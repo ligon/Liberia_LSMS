@@ -1,0 +1,145 @@
+This file demonstrates code used to read in data on household
+expenditures and consumption in Liberia, using data from a 2014
+LSMS-style survey from the World Bank.
+
+The source files are stata files (with a "dta" extension).  We'll
+demonstrate the use of a python module =lsms.tools= to extract
+information on household characteristics, expenditures, and
+consumption.  With these data extracts, we'll then demonstrate the use
+of these to estimate a demand system.
+
+** Data Sources
+There is one round of data from 2014.
+It can be obtained from the World Bank at
+http://microdata.worldbank.org/index.php/catalog/2563/.
+
+Go to "Get Microdata" and download the "Data in Stata8" option.
+This will download a zip file called
+=LBR_2014_HIES_v01_M_Stata8.zip=. Unzip this file and rename the
+resulting directory "2014". 
+
+Run the following code blocks in order:
+  1. =food_expenditures= (under the header "Item Food Expenditures")
+  2. =hh_compositions= (under the header "Household Composition")
+
+** Variables needed for "Item Food Expenditures":
+   Begin by working with food expenditures.  There are a few key
+   variables we need:
+#+begin_src ipython :tangle testfood.py
+import pandas as pd
+
+# List of input stata files for expenditures
+files = ['2014/HH_K1.dta']
+
+df = pd.read_stata(files[0],convert_categoricals=True)
+df.head()
+#+end_src
+
+
+For variable names, look at stata file and compare with questionnaire.
+
+#+begin_src ipython :tangle testfood.py
+# Variable name for household identifier (see stata file)
+HHID = 'hh_id'
+
+# Variable giving the expenditure item code:
+itmcd = 'hh_k_00_b'
+
+# Kinds of expenditures we'll use, with variable name in stata file:
+sources = {'purchased':'hh_k_05_1'}
+
+#+end_src
+
+
+#+NAME: foodExp
+| Year:   | 2014                      |
+|---------+---------------------------|
+| HHID    | 'hh_id'                   |
+| itmcd   | 'hh_k_00_b'               |
+| sources | {'purchased':'hh_k_05_1'} |
+| files   | ['2014/HH_K1.dta']        |
+
+** Item Food Expenditures 
+#+name: food_expenditures
+#+BEGIN_SRC ipython :noweb no-export :results output table :tangle testfood.py 
+# -*- coding: utf-8 -*-
+
+df[itmcd] = df[itmcd].astype(str)
+
+df = df.set_index([HHID,itmcd])[[sources['purchased']]]
+
+food_expenditures = df.unstack(itmcd)
+food_expenditures.columns = food_expenditures.columns.droplevel(0)
+food_expenditures.columns.name = 'i'
+
+food_expenditures.index.name = 'j'
+
+food_expenditures['t'] = 2014
+
+food_expenditures['m'] = 'Liberia'
+
+food_expenditures = food_expenditures.reset_index().set_index(['j','t','m'])
+
+food_expenditures.to_pickle('./tmp/food_expenditures.df')
+
+food_expenditures.head()
+#+END_SRC
+
+
+** Variables needed for "Household Composition":
+#+NAME: HHComp
+| Year:            | 2014              |
+|------------------+-------------------|
+| HHID             | 'hh_id'           |
+| sex              | 'hh_b_02'         |
+| age              | 'hh_b_06'         |
+| months_spent     | 'hh_b_10'         |
+| files            | ['2014/HH_B.dta'] |
+
+** Household Composition
+#+begin_src ipython :tangle testcomp.py
+import pandas as pd
+
+# List of input stata files for expenditures
+files = ['2014/HH_B.dta']
+
+df = pd.read_stata(files[0],convert_categoricals=True)
+df.head()
+#+end_src
+
+
+Define some key variables:
+#+begin_src ipython :tangle testcomp.py
+HHID = 'hh_id'     # Variable name for household identifier (see stata file)
+sex = 'hh_b_02'    # Variable giving sex
+age = 'hh_b_06'    # Variable giving age
+months_spent = 'hh_b_10' # Variable for months resident in last year
+#+end_src
+
+Now, process household roster using function in =lsms.tools=.
+#+name: hh_compositions
+#+BEGIN_SRC ipython :noweb no-export :results output table :tangle testcomp.py
+# -*- coding: utf-8 -*-
+from lsms.tools import get_household_roster
+
+# Now get household composition variables
+hh_composition = get_household_roster(fn=files[0],
+                                      HHID=HHID,
+                                      sex=sex,
+                                      age=age,
+                                      months_spent=months_spent)
+
+hh_composition.columns.name = 'k'
+
+hh_composition.index.name = 'j'
+
+hh_composition['t'] = 2014
+
+hh_composition['m'] = 'Liberia'
+
+hh_composition = hh_composition.reset_index().set_index(['j','t','m'])
+
+hh_composition.to_pickle('./tmp/hh_compositions.df')
+hh_composition.head()
+#+END_SRC
+
