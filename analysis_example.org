@@ -8,24 +8,25 @@ information on household characteristics, expenditures, and
 consumption.  With these data extracts, we'll then demonstrate the use
 of these to estimate a demand system.
 
+* Data
 ** Data Sources
-There is one round of data from 2014.
-It can be obtained from the World Bank at
-http://microdata.worldbank.org/index.php/catalog/2563/.
+ There is one round of data from 2014.
+ It can be obtained from the World Bank at
+ http://microdata.worldbank.org/index.php/catalog/2563/.
 
-Go to "Get Microdata" and download the "Data in Stata8" option.
-This will download a zip file called
-=LBR_2014_HIES_v01_M_Stata8.zip=. Unzip this file and rename the
-resulting directory "2014". 
+ Go to "Get Microdata" and download the "Data in Stata8" option.
+ This will download a zip file called
+ =LBR_2014_HIES_v01_M_Stata8.zip=. Unzip this file and rename the
+ resulting directory "2014". 
 
-Run the following code blocks in order:
-  1. =food_expenditures= (under the header "Item Food Expenditures")
-  2. =hh_compositions= (under the header "Household Composition")
+ Run the following code blocks in order:
+   1. =food_expenditures= (under the header "Item Food Expenditures")
+   2. =hh_compositions= (under the header "Household Composition")
 
 ** Variables needed for "Item Food Expenditures":
-   Begin by working with food expenditures.  There are a few key
-   variables we need:
-#+begin_src ipython :tangle testfood.py
+    Begin by working with food expenditures.  There are a few key
+    variables we need:
+ #+begin_src ipython :tangle testfood.py
 import pandas as pd
 
 # List of input stata files for expenditures
@@ -33,12 +34,12 @@ files = ['2014/HH_K1.dta']
 
 df = pd.read_stata(files[0],convert_categoricals=True)
 df.head()
-#+end_src
+ #+end_src
 
 
-For variable names, look at stata file and compare with questionnaire.
+ For variable names, look at stata file and compare with questionnaire.
 
-#+begin_src ipython :tangle testfood.py
+ #+begin_src ipython :tangle testfood.py
 # Variable name for household identifier (see stata file)
 HHID = 'hh_id'
 
@@ -48,20 +49,20 @@ itmcd = 'hh_k_00_b'
 # Kinds of expenditures we'll use, with variable name in stata file:
 sources = {'purchased':'hh_k_05_1'}
 
-#+end_src
+ #+end_src
 
 
-#+NAME: foodExp
-| Year:   | 2014                      |
-|---------+---------------------------|
-| HHID    | 'hh_id'                   |
-| itmcd   | 'hh_k_00_b'               |
-| sources | {'purchased':'hh_k_05_1'} |
-| files   | ['2014/HH_K1.dta']        |
+ #+NAME: foodExp
+ | Year:   | 2014                      |
+ |---------+---------------------------|
+ | HHID    | 'hh_id'                   |
+ | itmcd   | 'hh_k_00_b'               |
+ | sources | {'purchased':'hh_k_05_1'} |
+ | files   | ['2014/HH_K1.dta']        |
 
 ** Item Food Expenditures 
-#+name: food_expenditures
-#+BEGIN_SRC ipython :noweb no-export :results output table :tangle testfood.py 
+ #+name: food_expenditures
+ #+BEGIN_SRC ipython :noweb no-export :results output table :tangle testfood.py 
 # -*- coding: utf-8 -*-
 
 df[itmcd] = df[itmcd].astype(str)
@@ -83,42 +84,42 @@ food_expenditures = food_expenditures.reset_index().set_index(['j','t','m'])
 food_expenditures.to_pickle('./tmp/food_expenditures.df')
 
 food_expenditures.head()
-#+END_SRC
+ #+END_SRC
 
 
 ** Variables needed for "Household Composition":
-#+NAME: HHComp
-| Year:            | 2014              |
-|------------------+-------------------|
-| HHID             | 'hh_id'           |
-| sex              | 'hh_b_02'         |
-| age              | 'hh_b_06'         |
-| months_spent     | 'hh_b_10'         |
-| files            | ['2014/HH_B.dta'] |
+ #+NAME: HHComp
+ | Year:            | 2014              |
+ |------------------+-------------------|
+ | HHID             | 'hh_id'           |
+ | sex              | 'hh_b_02'         |
+ | age              | 'hh_b_06'         |
+ | months_spent     | 'hh_b_10'         |
+ | files            | ['2014/HH_B.dta'] |
 
 ** Household Composition
-#+begin_src ipython :tangle testcomp.py
+ #+begin_src ipython :tangle testcomp.py
 import pandas as pd
 
-# List of input stata files for expenditures
+# List of input stata files for household roster
 files = ['2014/HH_B.dta']
 
 df = pd.read_stata(files[0],convert_categoricals=True)
 df.head()
-#+end_src
+ #+end_src
 
 
-Define some key variables:
-#+begin_src ipython :tangle testcomp.py
+ Define some key variables:
+ #+begin_src ipython :tangle testcomp.py
 HHID = 'hh_id'     # Variable name for household identifier (see stata file)
 sex = 'hh_b_02'    # Variable giving sex
 age = 'hh_b_06'    # Variable giving age
 months_spent = 'hh_b_10' # Variable for months resident in last year
-#+end_src
+ #+end_src
 
-Now, process household roster using function in =lsms.tools=.
-#+name: hh_compositions
-#+BEGIN_SRC ipython :noweb no-export :results output table :tangle testcomp.py
+ Now, process household roster using function in =lsms.tools=.
+ #+name: hh_compositions
+ #+BEGIN_SRC ipython :noweb no-export :results output table :tangle testcomp.py
 # -*- coding: utf-8 -*-
 from lsms.tools import get_household_roster
 
@@ -139,7 +140,181 @@ hh_composition['m'] = 'Liberia'
 
 hh_composition = hh_composition.reset_index().set_index(['j','t','m'])
 
-hh_composition.to_pickle('./tmp/hh_compositions.df')
+hh_composition.to_pickle('./tmp/hh_composition.df')
 hh_composition.head()
-#+END_SRC
+ #+END_SRC
+
+ #+results: hh_compositions
+ :results:
+ # Out[4]:
+ # text/plain
+ : k                   girls  boys  men  women  
+
+
+
+
+* Estimating Demands
+
+With data on food expenditures and on characteristics, we're just
+about in a position to estimate the demand system.  Here we read in
+data from the "pickled" datasets created above (stored on a file
+system local to where the calculations were done; e.g., on =datahub=.
+
+#+begin_src ipython :results raw table :tangle testest.py
+import numpy as np
+import pandas as pd
+import cfe
+
+z = pd.read_pickle('./tmp/hh_composition.df')
+
+# Select desired variables ("Males xx-xx" and "Females xx-xx" both match "ales ")
+z = z.filter(regex='ales ')
+
+# If any households supposedly have *zero* members, drop them...
+z = z.loc[z.sum(axis=1)>0,:]
+
+# Add log(Hsize)
+z['log Hsize'] = np.log(z.sum(axis=1))
+
+# Replace zeros with NaNs, take logs
+y = np.log(pd.read_pickle('./tmp/food_expenditures.df').replace(0,np.nan))
+
+y = y.to_xarray().to_array('i')
+z = z.to_xarray().to_array('k')
+
+result = cfe.Result(y=y,z=z)
+
+result.get_predicted_log_expenditures()
+result.get_loglambdas()
+
+result.to_dataset('./tmp/result.ds')
+
+print(cfe.df_utils.df_to_orgtbl(result.beta.to_dataframe().sort_values('beta')))
+#+end_src
+
+** Engel Curves
+
+Here we use the estimated demand system to /predict/ what each
+household will consume, and then use these predictions to think about
+how expenditures shares for different goods vary with total
+expenditures.
+
+*** Scatterplot of predicted expenditures
+#+begin_src ipython :results raw table :tangle testengel.py
+import numpy as np
+import pandas as pd
+import cfe
+import matplotlib.pyplot as plt
+
+result = cfe.from_dataset('./tmp/result.ds')
+
+# Get predicted expenditures:
+xhat = result.get_predicted_expenditures()
+
+# Just one round and one market; adding eliminates dimension
+xhat = xhat.sum(['t','m'])
+
+# Total predicted expenditures:
+xbar = xhat.sum('i')
+
+# Compute shares:
+w = xhat/xbar
+
+# Now, graph some particular goods (to keep our graph from being too cluttered)
+goods = ['Bananas','Salt']
+
+# Engel curves often presented as shares vs. log total expenditures
+for i in goods:
+    plt.scatter(np.log(xbar),w.sel(i=i))
+
+plt.legend(goods)
+plt.xlabel('log total expenditures')
+plt.ylabel('Expenditure Shares')
+plt.show()
+ #+end_src
+
+
+*** Different source of variation
+ There are clear patterns here, but even predicted expenditures depend
+ on variation in both total expenditures as well as household
+ characteristics (if the data had variation over time or markets
+ there'd also be variation in prices).  
+
+ Different of these sources of variation can be "turned off", allowing
+ us to see how much variation in household composition or variation in
+ total expenditures /separately/ contribute to variation in
+ expenditures.
+
+ Consider shutting down variation in household composition:
+#+begin_src ipython
+%matplotlib inline
+import cfe
+import pandas as pd
+import matplotlib.pyplot as plt
+
+r0 = cfe.from_dataset('./tmp/result.ds')
+
+# Turn off variation in household composition
+r0['z'] = r0['z']*0
+
+# Get predicted expenditures:
+xhat = r0.get_predicted_expenditures()
+
+# Just one round and one market; adding eliminates dimension
+xhat = xhat.sum(['t','m'])
+
+# Total predicted expenditures:
+xbar = xhat.sum('i')
+
+# Compute shares:
+w = xhat/xbar
+
+# Now, graph some particular goods (to keep our graph from being too cluttered)
+goods = ['Bananas','Salt']
+
+# Engel curves often presented as shares vs. log total expenditures
+for i in goods:
+    plt.scatter(np.log(xbar),w.sel(i=i))
+
+plt.legend(goods)
+plt.show()
+#+end_src
+
+It could also be interesting to shut down variation in resources
+(i.e., via the \log\lambda):
+
+#+begin_src ipython
+%matplotlib inline
+import cfe
+import pandas as pd
+import matplotlib.pyplot as plt
+
+r1 = cfe.from_dataset('./tmp/result.ds')
+
+# Turn off variation in household composition
+r1['loglambdas'] = r1['loglambdas']*0
+
+# Get predicted expenditures:
+xhat = r1.get_predicted_expenditures()
+
+# Just one round and one market; adding eliminates dimension
+xhat = xhat.sum(['t','m'])
+
+# Total predicted expenditures:
+xbar = xhat.sum('i')
+
+# Compute shares:
+w = xhat/xbar
+
+# Now, graph some particular goods (to keep our graph from being too cluttered)
+goods = ['Bananas','Salt']
+
+# Engel curves often presented as shares vs. log total expenditures
+for i in goods:
+    plt.scatter(np.log(xbar),w.sel(i=i))
+
+plt.legend(goods)
+plt.show()
+#+end_src
+
 
